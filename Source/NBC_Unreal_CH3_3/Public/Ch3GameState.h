@@ -4,16 +4,24 @@
 #include "GameFramework/GameState.h"
 #include "Ch3GameState.generated.h"
 
-/**
- *
- */
+USTRUCT(BlueprintType)
+struct FWaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WaveDuration;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SpawnItemCount;
+};
+
 UCLASS()
 class NBC_UNREAL_CH3_3_API ACh3GameState : public AGameState
 {
 	GENERATED_BODY()
-	virtual void BeginPlay() override;
 
 public:
+	virtual void BeginPlay() override;
 	ACh3GameState();
 
 	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite, Category = "Score")
@@ -39,6 +47,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level")
 	TArray<FName> LevelMapNames;
 
+	// 웨이브 관련
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TArray<FWaveData> WaveData;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 CurrentWaveIndex;
+
 	// 매 레벨이 끝나기 전까지 시간이 흐르도록 관리하는 타이머
 	FTimerHandle LevelTimerHandle;
 	FTimerHandle HUDUpdateTimerHandle;
@@ -60,4 +74,10 @@ public:
 	// 레벨을 강제 종료하고 다음 레벨로 이동
 	void EndLevel();
 	void UpdateHUD();
+
+	// 웨이브 관련 함수
+	void StartWave();
+	void EndWave();
+	void OnWaveTimeUp();
+
 };

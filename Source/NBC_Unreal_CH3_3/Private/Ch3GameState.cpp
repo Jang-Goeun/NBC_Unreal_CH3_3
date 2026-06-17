@@ -15,21 +15,26 @@ ACh3GameState::ACh3GameState()
 	LevelDuration = 30.0f; // 한 레벨당 30초
 	CurrentLevelIndex = 0;
 	MaxLevels = 3;
+	CurrentWaveIndex = 0;
 }
 
 void ACh3GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	StartLevel();
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("MenuLevel"))
+	{
+		StartLevel();
 
-	GetWorldTimerManager().SetTimer(
-		HUDUpdateTimerHandle,
-		this,
-		&ACh3GameState::UpdateHUD,
-		0.1f,
-		true
-	);
+		GetWorldTimerManager().SetTimer(
+			HUDUpdateTimerHandle,
+			this,
+			&ACh3GameState::UpdateHUD,
+			0.1f,
+			true
+		);
+	}
 }
 
 int32 ACh3GameState::GetScore() const
@@ -71,44 +76,13 @@ void ACh3GameState::StartLevel()
 	// 레벨 시작 시, 코인 개수 초기화
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
-
-	// 현재 맵에 배치된 모든 SpawnVolume을 찾아 아이템 40개를 스폰
-	TArray<AActor*> FoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
-
-	const int32 ItemToSpawn = 40;
-
-	for (int32 i = 0; i < ItemToSpawn; i++)
-	{
-		if (FoundVolumes.Num() > 0)
-		{
-			ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
-			if (SpawnVolume)
-			{
-					AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
-					// 만약 스폰된 액터가 코인 타입이라면 SpawnedCoinCount 증가
-					if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass()))
-					{
-							SpawnedCoinCount++;
-					}
-			}
-		}
-	}
-
-	// 30초 후에 OnLevelTimeUp()가 호출되도록 타이머 설정
-	GetWorldTimerManager().SetTimer(
-		LevelTimerHandle,
-		this,
-		&ACh3GameState::OnLevelTimeUp,
-		LevelDuration,
-		false
-	);
+	CurrentWaveIndex = 0;
+	StartWave();
 }
 
 void ACh3GameState::OnLevelTimeUp()
 {
-	// 시간이 다 되면 레벨을 종료
-	EndLevel();
+	OnWaveTimeUp();
 }
 
 void ACh3GameState::OnCoinCollected()
@@ -119,10 +93,9 @@ void ACh3GameState::OnCoinCollected()
 		CollectedCoinCount,
 		SpawnedCoinCount)
 
-	// 현재 레벨에서 스폰된 코인을 전부 주웠다면 즉시 레벨 종료
 	if (SpawnedCoinCount > 0 && CollectedCoinCount >= SpawnedCoinCount)
 	{
-			EndLevel();
+		EndWave();
 	}
 }
 
@@ -206,4 +179,68 @@ void ACh3GameState::UpdateHUD()
 			}
 		}
 	}
+}
+
+void ACh3GameState::StartWave()
+{
+	if (WaveData.IsValidIndex(CurrentWaveIndex))
+	{
+		// [과제 요구사항] 알림 출력
+		FString StartMsg = FString::Printf(TEXT("Level %d / Wave %d 시작!"), CurrentLevelIndex + 1, CurrentWaveIndex + 1);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, StartMsg);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *StartMsg);
+
+		// 이번 웨이브의 시간 적용 및 타이머 시작
+		float Duration = WaveData[CurrentWaveIndex].WaveDuration;
+		GetWorldTimerManager().SetTimer(
+			LevelTimerHandle,
+			this,
+			&ACh3GameState::OnWaveTimeUp,
+			Duration,
+			false
+		);
+
+		// 이번 웨이브의 아이템 개수만큼 스폰 명령
+		int32 ItemsToSpawn = WaveData[CurrentWaveIndex].SpawnItemCount;
+
+		TArray<AActor*> FoundVolumes;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
+
+		for (int32 i = 0; i < ItemsToSpawn; i++)
+		{
+			if (FoundVolumes.Num() > 0)
+			{
+				ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
+				if (SpawnVolume)
+				{
+					AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
+					if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass()))
+					{
+						SpawnedCoinCount++;
+					}
+				}
+			}
+		}
+	}
+}
+
+void ACh3GameState::EndWave()
+{
+	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
+
+	CurrentWaveIndex++;
+
+	if (CurrentWaveIndex < WaveData.Num())
+	{
+		StartWave();
+	}
+	else
+	{
+		EndLevel();
+	}
+}
+
+void ACh3GameState::OnWaveTimeUp()
+{
+	EndWave();
 }
