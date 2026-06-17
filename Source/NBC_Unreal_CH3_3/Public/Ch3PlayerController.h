@@ -31,5 +31,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input");
 	UInputAction* SprintAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="HUD");
+	TSubclassOf<UUserWidget> HUDWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="HUD");
+	UUserWidget* HUDWidgetInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Menu");
+	TSubclassOf<UUserWidget> MianMenuidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Menu");
+	UUserWidget* MianMenuWidgetInstance;
+
+	UFUNCTION(BlueprintPure, Category="HUD")
+	UUserWidget* GetHUDWidget() const;
+	UFUNCTION(BlueprintCallable, Category="HUD")
+	void ShowGameHUD();
+	UFUNCTION(BlueprintCallable, Category="Menu")
+	void ShowMainMenu(bool bIsRestart);
+	UFUNCTION(BlueprintCallable, Category="Menu")
+	void StartGame();
+
+protected:
 	virtual void BeginPlay() override;
 };

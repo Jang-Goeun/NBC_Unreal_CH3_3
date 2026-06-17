@@ -1,10 +1,15 @@
 #include "Ch3Character.h"
 
+#include "Ch3GameState.h"
 #include "Ch3PlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/TextBlock.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
 
 ACh3Character::ACh3Character()
 {
@@ -21,17 +26,25 @@ ACh3Character::ACh3Character()
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
 
+	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+	OverheadWidget->SetupAttachment(GetMesh());
+	OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
 	// 이동 속도 관련
 	NormalSpeed = 600.0f;
-	SprintSpeedMultiplier = 1.5f;
+	SprintSpeedMultiplier = 1.7f;
 	SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
+	// 초기 체력 설정
+	MaxHealth = 100.0f;
+	Health = MaxHealth;
 }
 
 void ACh3Character::BeginPlay()
 {
 	Super::BeginPlay();
-
+	UpdateOverheadHP();
 }
 
 void ACh3Character::Tick(float DeltaTime)
@@ -163,5 +176,56 @@ void ACh3Character::StopSprint(const FInputActionValue& value)
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+	}
+}
+
+int32 ACh3Character::GetHealth() const
+{
+	return Health;
+}
+
+// 체력 회복 함수
+void ACh3Character::AddHealth(float Amount)
+{
+	Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
+	UpdateOverheadHP();
+}
+
+// 데미치 처리 함수
+float ACh3Character::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+	UpdateOverheadHP();
+
+	if (Health <= 0.0f)
+	{
+		OnDeath();
+	}
+
+	return ActualDamage;
+}
+
+// 사망 처리 함수
+void ACh3Character::OnDeath()
+{
+	ACh3GameState* Ch3GameState = GetWorld() ? GetWorld()->GetGameState<ACh3GameState>() : nullptr;
+	if (Ch3GameState)
+	{
+		Ch3GameState->OnGameOver();
+	}
+}
+
+void ACh3Character::UpdateOverheadHP()
+{
+	if (!OverheadWidget) return;
+
+	UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
+	if (!OverheadWidgetInstance) return;
+
+	if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
+	{
+		HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
 	}
 }

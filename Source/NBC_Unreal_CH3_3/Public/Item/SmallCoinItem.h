@@ -1,0 +1,15 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "CoinItem.h"
+#include "SmallCoinItem.generated.h"
+
+UCLASS()
+class NBC_UNREAL_CH3_3_API ASmallCoinItem : public ACoinItem
+{
+	GENERATED_BODY()
+
+public:
+	ASmallCoinItem();
+	virtual void ActivateItem(AActor* Activator) override;
+};
