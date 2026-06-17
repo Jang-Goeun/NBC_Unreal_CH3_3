@@ -37,9 +37,9 @@ public:
 	UUserWidget* HUDWidgetInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Menu");
-	TSubclassOf<UUserWidget> MianMenuidgetClass;
+	TSubclassOf<UUserWidget> MainMenuidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Menu");
-	UUserWidget* MianMenuWidgetInstance;
+	UUserWidget* MainMenuWidgetInstance;
 
 	UFUNCTION(BlueprintPure, Category="HUD")
 	UUserWidget* GetHUDWidget() const;

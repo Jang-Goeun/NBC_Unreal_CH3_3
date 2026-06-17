@@ -16,8 +16,8 @@ ACh3PlayerController::ACh3PlayerController()
 	  SprintAction(nullptr),
 	  HUDWidgetClass(nullptr),
 	  HUDWidgetInstance(nullptr),
-	  MianMenuidgetClass(nullptr),
-	  MianMenuWidgetInstance(nullptr)
+	  MainMenuidgetClass(nullptr),
+	  MainMenuWidgetInstance(nullptr)
 {
 }
 
@@ -57,37 +57,37 @@ void ACh3PlayerController::ShowMainMenu(bool bIsRestart)
 		HUDWidgetInstance = nullptr;
 	}
 
-	if (MianMenuWidgetInstance)
+	if (MainMenuWidgetInstance)
 	{
-		MianMenuWidgetInstance->RemoveFromParent();
-		MianMenuWidgetInstance = nullptr;
+		MainMenuWidgetInstance->RemoveFromParent();
+		MainMenuWidgetInstance = nullptr;
 	}
 
-	if (MianMenuidgetClass)
+	if (MainMenuidgetClass)
 	{
-		MianMenuWidgetInstance = CreateWidget<UUserWidget>(this, MianMenuidgetClass);
-		if (MianMenuWidgetInstance)
+		MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuidgetClass);
+		if (MainMenuWidgetInstance)
 		{
-			MianMenuWidgetInstance->AddToViewport();
+			MainMenuWidgetInstance->AddToViewport();
 
 			bShowMouseCursor = true;
 			SetInputMode(FInputModeUIOnly());
 		}
 
-		if (UTextBlock* ButtonText = Cast<UTextBlock>(MianMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+		if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
 		{
 			ButtonText->SetText(FText::FromString(bIsRestart ? TEXT("ReStart") : TEXT("Start")));
 		}
 
-		UWidget* GameOverText = MianMenuWidgetInstance->GetWidgetFromName(TEXT("GameOverText"));
-		UTextBlock* TotalScoreText = Cast<UTextBlock>(MianMenuWidgetInstance->GetWidgetFromName(TEXT("TotalScoreText")));
+		UWidget* GameOverText = MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameOverText"));
+		UTextBlock* TotalScoreText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("TotalScoreText")));
 
 		if (bIsRestart)
 		{
-			UFunction* PlayAnimFunc = MianMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
+			UFunction* PlayAnimFunc = MainMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
 			if (PlayAnimFunc)
 			{
-				MianMenuWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+				MainMenuWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
 			}
 
 			if (GameOverText)
@@ -128,10 +128,10 @@ void ACh3PlayerController::ShowGameHUD()
 		HUDWidgetInstance = nullptr;
 	}
 
-	if (MianMenuWidgetInstance)
+	if (MainMenuWidgetInstance)
 	{
-		MianMenuWidgetInstance->RemoveFromParent();
-		MianMenuWidgetInstance = nullptr;
+		MainMenuWidgetInstance->RemoveFromParent();
+		MainMenuWidgetInstance = nullptr;
 	}
 
 	if (HUDWidgetClass)
