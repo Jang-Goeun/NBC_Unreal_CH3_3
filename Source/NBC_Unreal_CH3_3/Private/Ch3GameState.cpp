@@ -5,7 +5,9 @@
 #include "Ch3PlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 #include "Item/CoinItem.h"
+#include "Ch3Character.h"
 
 ACh3GameState::ACh3GameState()
 {
@@ -103,6 +105,7 @@ void ACh3GameState::EndLevel()
 {
 	// 타이머 해제
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
+	GetWorldTimerManager().ClearTimer(HUDUpdateTimerHandle);
 
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
@@ -148,11 +151,14 @@ void ACh3GameState::OnGameOver()
 
 void ACh3GameState::UpdateHUD()
 {
+	if (!GetWorld()) return;
+
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ACh3PlayerController* Ch3PlayerController = Cast<ACh3PlayerController>(PlayerController))
 		{
-			if (UUserWidget* HUDWidget = Ch3PlayerController->GetHUDWidget())
+			UUserWidget* HUDWidget = Ch3PlayerController->GetHUDWidget();
+			if (IsValid(HUDWidget))
 			{
 				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
 				{
@@ -175,6 +181,17 @@ void ACh3GameState::UpdateHUD()
 				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
 				{
 					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+				}
+
+				if (ACh3Character* Ch3Character = Cast<ACh3Character>(Ch3PlayerController->GetPawn()))
+				{
+					if (IsValid(Ch3Character))
+					{
+						if (UProgressBar* HealthBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("HealthBar"))))
+						{
+							HealthBar->SetPercent(Ch3Character->GetHealth() / 100.0f);
+						}
+					}
 				}
 			}
 		}

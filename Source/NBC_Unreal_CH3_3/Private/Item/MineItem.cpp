@@ -21,18 +21,22 @@ void AMineItem::ActivateItem(AActor* Activator)
 	if (bHasExploded) return;
 
 	Super::ActivateItem(Activator);
-	GetWorld()->GetTimerManager().SetTimer(ExplosionTimerHandle, this, &AMineItem::Explode, ExplosionDelay);
+
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().SetTimer(ExplosionTimerHandle, this, &AMineItem::Explode, ExplosionDelay);
+	}
 
 	bHasExploded = true;
 }
 
 void AMineItem::Explode()
 {
-	UParticleSystemComponent* Particle = nullptr;
+	if (!IsValid(this) || !GetWorld()) return;
 
 	if (ExplosionParticle)
 	{
-		Particle = UGameplayStatics::SpawnEmitterAtLocation(
+		UGameplayStatics::SpawnEmitterAtLocation(
 			GetWorld(),
 			ExplosionParticle,
 			GetActorLocation(),
@@ -63,19 +67,4 @@ void AMineItem::Explode()
 
 	// 지뢰 제거
 	DestroyItem();
-
-	if (Particle)
-	{
-		FTimerHandle DestroyParticleTimerHandle;
-
-		GetWorld()->GetTimerManager().SetTimer(
-			DestroyParticleTimerHandle,
-			[Particle]()
-			{
-				Particle->DestroyComponent();
-			},
-			1.0f,
-			false
-			);
-	}
 }

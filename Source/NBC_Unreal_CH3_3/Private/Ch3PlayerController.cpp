@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 ACh3PlayerController::ACh3PlayerController()
 	: InputMappingContext(nullptr),
@@ -164,4 +165,15 @@ void ACh3PlayerController::StartGame()
 
 	UGameplayStatics::OpenLevel(GetWorld(), FName("BasicLevel"));
 	SetPause(false);
+}
+
+void ACh3PlayerController::QuitGame()
+{
+	UKismetSystemLibrary::QuitGame(GetWorld(), this, EQuitPreference::Quit, false);
+}
+
+void ACh3PlayerController::BackToMainMenu()
+{
+	SetPause(false);
+	UGameplayStatics::OpenLevel(GetWorld(), FName("MenuLevel"));
 }
